@@ -38,46 +38,6 @@ E_upperBound = 10.0
 E_trial = E_upperBound
 E_EigenEnergies = np.zeros(n_energyLev)
 
-#   Main loop
-for ith_energyLev in range(1,n_energyLev) :
-
-    print("Energy level - {}: searching solution.".format(ith_energyLev))
-
-    #   Fast search for an energy upper bound on the all eigenstates:
-    loop_count = 0
-    while not coarse_search_bounds(ith_energyLev):
-        loop_count += 1
-        if loop_count > 10000:
-            print("Exceeded 10 000 energy estimates.")
-            exit()
-
-    end_sign = -end_sign
-
-    #   Refine the energy by satisfying the right-boundary condition:
-    loop_count = 0
-    while refine_bounds(ith_energyLev):
-        loop_count += 1
-        if loop_count > 10000:
-            print("Exceeded 10 000 energy refining loops.")
-            exit()
-
-    #   Normalize the solution:
-    psi /= np.trapz(pow(psi,2),dx=x_delta)
-
-    #   Add units to energy:
-    E_trial = (E_lowerBound + E_upperBound) / 2
-    E_EigenEnergies[ith_energyLev] = energy_scale * E_trial
-    
-    #   Plot solution:
-    plt.plot(region,psi)
-
-    #   Reset loop:
-    E_upperBound = E_trial
-    E_lowerBound = E_trial
-
-print(E_EigenEnergies)
-plt.show()
-
 
 def k_squared(i,E):
     return 2.0 * (E - E_pot[i])         #k^2(x) = 2m(E - V(x)) / hbar^2
@@ -137,3 +97,44 @@ def refine_bounds(ith_energyLev):
         E_upperBound = E_trial
 
     return E_upperBound - E_lowerBound < eps
+
+
+#   Main loop
+for ith_energyLev in range(1,n_energyLev) :
+
+    print("Energy level - {}: searching solution.".format(ith_energyLev))
+
+    #   Fast search for an energy upper bound on the all eigenstates:
+    loop_count = 0
+    while not coarse_search_bounds(ith_energyLev):
+        loop_count += 1
+        if loop_count > 10000:
+            print("Exceeded 10 000 energy estimates.")
+            exit()
+
+    end_sign = -end_sign
+
+    #   Refine the energy by satisfying the right-boundary condition:
+    loop_count = 0
+    while refine_bounds(ith_energyLev):
+        loop_count += 1
+        if loop_count > 10000:
+            print("Exceeded 10 000 energy refining loops.")
+            exit()
+
+    #   Normalize the solution:
+    psi /= np.trapz(pow(psi,2),dx=x_delta)
+
+    #   Add units to energy:
+    E_trial = (E_lowerBound + E_upperBound) / 2
+    E_EigenEnergies[ith_energyLev] = energy_scale * E_trial
+    
+    #   Plot solution:
+    plt.plot(region,psi)
+
+    #   Reset loop:
+    E_upperBound = E_trial
+    E_lowerBound = E_trial
+
+print(E_EigenEnergies)
+plt.show()
