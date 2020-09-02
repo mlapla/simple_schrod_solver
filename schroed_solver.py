@@ -8,16 +8,16 @@ omega = 5.34e21                 #Harmonic oscillator frequency
 energy_scale = 3.5
 
 #   Calculation precision:
-eps = 1.0e-10                   #Required precision for the solution to achieve
-n_divisions = 1000              #Number of divisions of the integration region
+eps = 1.0e-11                   #Required precision for the solution to achieve
+n_divisions = 1200              #Number of divisions of the integration region
 n_energyLev = 5                 #Number of energy levels to compute
 n_zeros = 0                     #Number of zeroes in the solution
-x_range = 12.0                  #Integration region length
+x_range = 11.0                  #Integration region length
 x_delta = x_range / n_divisions #Width of each division (spatial resolution)
 
 #   Define the potential:
 def E_pot_fun(x):
-    return 0.5 * pow(x,2)       #Harmonic potential
+    return 0.5 * pow(x,2.0)       #Harmonic potential
 
 region = np.arange(-x_range/2,x_range/2,x_range/n_divisions)
 E_pot = (np.vectorize(E_pot_fun))(region)
@@ -46,7 +46,7 @@ def numerov_approx(psi_m1,psi_m2,i,E):
     denom = 1.0 + (pow(x_delta,2) * k_squared(i,E) / 12.0)
     term1 = 1.0 - (5.0 * pow(x_delta,2) * k_squared(i-1,E) / 12.0)
     term2 = 1.0 + (pow(x_delta,2) * k_squared(i-2,E) / 12.0)
-    return (2.0 * term1 * psi_m1 - term2 * psi_m2) / denom 
+    return ((2.0 * term1 * psi_m1) - term2 * psi_m2) / denom
 
 def coarse_search_bounds(ith_energyLev):
     #   Iterative step in search of an energy upper bound. Return True if the
@@ -62,15 +62,15 @@ def coarse_search_bounds(ith_energyLev):
     for i in range(2,n_divisions):
         psi[i] = numerov_approx(psi[i-1],psi[i-2],i,E_trial)
         #   Count the zeros of the solution:
-        if psi[i-1]*psi[i] < 0.0 :
+        if (psi[i-1]*psi[i]) < 0.0 :
             n_zeros += 1
 
     if E_upperBound < E_lowerBound:
         E_upperBound = max(2.0 * E_upperBound, - 2.0 * E_upperBound)
 
-    #   Find the right amount of nodes for the solution    
+    #   Find the right amount of nodes for the solution
     if n_zeros > ith_energyLev :
-        E_upperBound *= 0.7
+        E_upperBound *= 0.6
         return False
     elif n_zeros < ith_energyLev :
         E_upperBound *= 2.0
@@ -90,13 +90,13 @@ def refine_bounds(ith_energyLev):
     #   Solve once:
     for i in range(2,n_divisions):
         psi[i] = numerov_approx(psi[i-1],psi[i-2],i,E_trial)
-    
-    if end_sign * psi[-1] > psi_right :
+
+    if (end_sign * psi[-1]) > psi_right :
         E_lowerBound = E_trial
     else :
         E_upperBound = E_trial
 
-    return E_upperBound - E_lowerBound < eps
+    return (E_upperBound - E_lowerBound) < eps
 
 
 #   Main loop
@@ -116,19 +116,19 @@ for ith_energyLev in range(1,n_energyLev) :
 
     #   Refine the energy by satisfying the right-boundary condition:
     loop_count = 0
-    while refine_bounds(ith_energyLev):
+    while not refine_bounds(ith_energyLev):
         loop_count += 1
         if loop_count > 10000:
             print("Exceeded 10 000 energy refining loops.")
             exit()
 
     #   Normalize the solution:
-    psi /= np.trapz(pow(psi,2),dx=x_delta)
+    psi /= pow(np.trapz(np.square(psi),dx=x_delta),0.5)
 
     #   Add units to energy:
     E_trial = (E_lowerBound + E_upperBound) / 2
     E_EigenEnergies[ith_energyLev] = energy_scale * E_trial
-    
+
     #   Plot solution:
     plt.plot(region,psi)
 
