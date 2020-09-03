@@ -1,9 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-#   Plotting prep
-plt.ion()
-
 #   Physical Constants:
 h_bar = 1.05457e-34
 MeV = 1.60217648e-13
@@ -40,6 +37,28 @@ E_lowerBound = 0.0
 E_upperBound = 10.0
 E_trial = E_upperBound
 E_EigenEnergies = np.zeros(n_energyLev)
+
+#   Plotting prep
+plt.ion()
+fig = plt.figure()
+a1 = fig.add_axes([0,0,1,1])
+a1.set_title('Harmonic Oscillator solutions')
+a1.set_ylim(0,10000)
+a1.set_xlim(0,10)
+solutions = [[] for x in range(n_energyLev)]
+
+def store_solution(index):
+    global psi
+    global solutions
+    solutions[index-1] = psi / pow(np.trapz(np.square(psi),dx=x_delta),0.5)
+
+def draw_plot(index):
+    store_solution(index)
+    for i in range(index):
+        plt.plot(region,solutions[i])
+    plt.draw()
+    plt.pause(0.005)
+    plt.clf()
 
 
 def k_squared(i,E):
@@ -99,10 +118,7 @@ def refine_bounds(ith_energyLev):
     else :
         E_upperBound = E_trial
 
-    plt.plot(region,psi)
-    plt.draw()
-    plt.pause(0.005)
-    plt.clf()
+    draw_plot(n_zeros)
 
     return (E_upperBound - E_lowerBound) < eps
 
@@ -144,3 +160,4 @@ for ith_energyLev in range(1,n_energyLev) :
     E_lowerBound = E_trial
 
 print(E_EigenEnergies)
+plt.show()
