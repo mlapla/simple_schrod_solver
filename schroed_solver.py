@@ -3,30 +3,29 @@ from matplotlib import pyplot as plt
 
 #   Physical Constants:
 h_bar = 1.05457e-34
-MeV = 1.60217648e-13
-omega = 5.34e21                 #Harmonic oscillator frequency
+MeV   = 1.60217648e-13
+omega = 5.34e21                 # Harmonic oscillator frequency
 energy_scale = 3.5
 
 #   Calculation precision:
-eps = 1.0e-11                   #Required precision for the solution to achieve
-n_divisions = 1200              #Number of divisions of the integration region
-n_energyLev = 5                 #Number of energy levels to compute
-n_zeros = 0                     #Number of zeroes in the solution
-x_range = 11.0                  #Integration region length
-x_delta = x_range / n_divisions #Width of each division (spatial resolution)
+eps = 1.0e-11                   # Required precision for the solution to achieve
+n_divisions = 1200              # Number of divisions of the integration region
+n_energyLev = 5                 # Number of energy levels to compute
+n_zeros = 0                     # Number of zeroes in the solution
+x_range = 11.0                  # Integration region length
+x_delta = x_range / n_divisions # Width of each division (spatial resolution)
 
-#   Define the potential:
+#   Potential:
 def E_pot_fun(x):
-    return 0.5 * pow(x,2.0)       #Harmonic potential
+    return 0.5 * pow(x,2.0)     # Harmonic potential
 
 region = np.arange(-x_range/2,x_range/2,x_range/n_divisions)
-E_pot = (np.vectorize(E_pot_fun))(region)
+E_pot  = (np.vectorize(E_pot_fun))(region)
 
-#   Define the boundary conditions:
-psi_left = 1.0e-3
+#   Boundary conditions:
+psi_left  = 1.0e-3
 psi_right = 0.0
-end_sign = -1
-
+end_sign  = -1
 psi = np.zeros(n_divisions)
 psi[0] = psi_left
 psi[1] = psi_left + 1.0e-3
@@ -39,18 +38,24 @@ E_trial = E_upperBound
 E_EigenEnergies = np.zeros(n_energyLev)
 
 
-def k_squared(i,E):
-    return 2.0 * (E - E_pot[i])         #k^2(x) = 2m(E - V(x)) / hbar^2
+#############
+#   Solver  #
+#############
 
-def numerov_approx(psi_m1,psi_m2,i,E):
+def k_squared(i, E):
+    return 2.0 * (E - E_pot[i])         # k^2(x) = 2m(E - V(x)) / hbar^2
+
+def numerov_approx(psi_m1, psi_m2, i ,E):
     denom = 1.0 + (pow(x_delta,2) * k_squared(i,E) / 12.0)
     term1 = 1.0 - (5.0 * pow(x_delta,2) * k_squared(i-1,E) / 12.0)
     term2 = 1.0 + (pow(x_delta,2) * k_squared(i-2,E) / 12.0)
     return ((2.0 * term1 * psi_m1) - term2 * psi_m2) / denom
 
 def coarse_search_bounds(ith_energyLev):
-    #   Iterative step in search of an energy upper bound. Return True if the
-    #   estimated bounds achieve the correct amount of zeros in the solution.
+    """
+    Iterative step in search of an energy upper bound. Return True if the
+    estimated bounds achieve the correct amount of zeros in the solution.
+    """
     global E_upperBound
     global E_lowerBound
     global n_zeros
@@ -79,8 +84,10 @@ def coarse_search_bounds(ith_energyLev):
         return True
 
 def refine_bounds(ith_energyLev):
-    #   Refines the energy level by looking at the right boundary condition.
-    #   Returns True if the precision goal is achieved, false otherwise.
+    """
+    Refines the energy level by looking at the right boundary condition.
+    Returns True if the precision goal is achieved, false otherwise.
+    """
     global E_upperBound
     global E_lowerBound
     global n_zeros
@@ -99,7 +106,10 @@ def refine_bounds(ith_energyLev):
     return (E_upperBound - E_lowerBound) < eps
 
 
-#   Main loop
+################
+#   Main Loop  #
+################
+
 for ith_energyLev in range(1,n_energyLev) :
 
     print("Energy level - {}: searching solution.".format(ith_energyLev))
