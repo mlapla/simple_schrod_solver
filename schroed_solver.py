@@ -53,8 +53,13 @@ def numerov_approx(psi_m1, psi_m2, i ,E):
 
 def coarse_search_bounds(ith_energyLev):
     """
-    Iterative step in search of an energy upper bound. Return True if the
-    estimated bounds achieve the correct amount of zeros in the solution.
+    Iterative step in search of an energy upper bound.
+
+    Parameters:
+    ith_energyLev (int): the energy level of the solution
+
+    Returns:
+    bool: True if the bounds have the appropriate amount of zeros, false otherwise. 
     """
     global E_upperBound
     global E_lowerBound
@@ -64,8 +69,8 @@ def coarse_search_bounds(ith_energyLev):
     E_trial = E_upperBound
 
     #   Solve once:
-    for i in range(2,n_divisions):
-        psi[i] = numerov_approx(psi[i-1],psi[i-2],i,E_trial)
+    for i in range(2, n_divisions):
+        psi[i] = numerov_approx(psi[i-1], psi[i-2], i, E_trial)
         #   Count the zeros of the solution:
         if (psi[i-1]*psi[i]) < 0.0 :
             n_zeros += 1
@@ -80,13 +85,18 @@ def coarse_search_bounds(ith_energyLev):
     elif n_zeros < ith_energyLev :
         E_upperBound *= 2.0
         return False
-    else :
+    else:
         return True
 
 def refine_bounds(ith_energyLev):
     """
     Refines the energy level by looking at the right boundary condition.
-    Returns True if the precision goal is achieved, false otherwise.
+    
+    Parameters:
+    ith_energyLev (int): the energy level of the searched solution.
+
+    Returns: 
+    bool: True if the precision goal is achieved, false otherwise.
     """
     global E_upperBound
     global E_lowerBound
